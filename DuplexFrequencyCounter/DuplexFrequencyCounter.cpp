@@ -1,7 +1,6 @@
 // vim: set foldmethod=marker filetype=cpp:
 
-#ifndef DUPLEX_FREQ_COUNT
-#define DUPLEX_FREQ_COUNT
+#include <Arduino.h>
 
 void readFreq (uint32_t ms, uint32_t &result0, uint32_t &result1)	// {{{
 // This function reads the frequency of the signal on pins 4 (timer 0 input t0) and 5 (timer 1 input t1).
@@ -110,5 +109,3 @@ void readFreq (uint32_t ms, uint32_t &result0, uint32_t &result1)	// {{{
 	result0 = ((uint32_t)overflow0 << 8 | (uint32_t)low_result0) * 1000 / ms;
 	result1 = ((uint32_t)overflow1 << 16 | (uint32_t)low_result1) * 1000 / ms;
 }	// }}}
-
-#endif
