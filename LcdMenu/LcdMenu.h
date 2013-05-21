@@ -7,71 +7,78 @@
 // You have to make sure this exists in your main program.
 extern Adafruit_RGBLCDShield lcd;
 
+void message (char *line1, char *line2 = "");
+uint8_t waitForButton ();
+
 class action
 {
 	public:
-	virtual void run () = 0;
+	virtual bool run () = 0;
 };
 
 class CB_t : public action
 {
-	void (*cb)();
+	bool (*cb)();
 	public:
-	CB_t (void (*cb)()) : cb (cb) {}
-	virtual void run () { cb (); }
+	CB_t (bool (*cb)()) : cb (cb) {}
+	virtual bool run () { return cb (); }
 };
 
-#define MenuItem(name) void name ## _impl (); CB_t name (name ## _impl); void name ## _impl ()
+#define MenuItem(name) bool name ## _impl (); CB_t name (name ## _impl); bool name ## _impl ()
 
 template <unsigned num_choices> class Menu : public action
 {
 	public:
-	Menu (char *(&names)[num_choices], action *(&actions)[num_choices]);
-	virtual void run ();
+	Menu (char *title, char *(&names)[num_choices], action *(&actions)[num_choices]);
+	virtual bool run ();
 
 	private:
+	char *title;
 	char **names;
 	action **actions;
 	uint8_t choice;
 	void show ();
 };
 
-template <unsigned num_choices> Menu <num_choices>::Menu (char *(&names)[num_choices], action *(&actions)[num_choices])
-	: names (names), actions (actions), choice (0)
+template <unsigned num_choices> Menu <num_choices>::Menu (char *title, char *(&names)[num_choices], action *(&actions)[num_choices])
+	: title (title), names (names), actions (actions), choice (0)
 {
 }
 
 template <unsigned num_choices> void Menu <num_choices>::show ()
 {
 	lcd.clear ();
-	lcd.print (">");
+	lcd.print (title);
+	lcd.setCursor (0,1);
 	lcd.print (names[choice]);
-	lcd.setCursor (15, 0);
-	lcd.print ("<");
-	lcd.setCursor (1,1);
-	lcd.print (names[(choice + 1) % num_choices]);
 }
 
-template <unsigned num_choices> void Menu <num_choices>::run ()
+template <unsigned num_choices> bool Menu <num_choices>::run ()
 {
-	show ();
-	while (lcd.readButtons ()) {}
 	while (true)
 	{
-		uint8_t buttons = lcd.readButtons ();
-		if (!buttons)
-			continue;
+		show ();
+		uint8_t buttons = waitForButton ();
 		lcd.clear ();
 		if (buttons & BUTTON_UP)
-			choice = (choice - 1) % num_choices;
+		{
+			choice = (choice + num_choices - 1) % num_choices;
+		}
 		else if (buttons & BUTTON_DOWN)
+		{
 			choice = (choice + 1) % num_choices;
+		}
 		else if (buttons & (BUTTON_SELECT | BUTTON_RIGHT))
-			actions[choice]->run ();
+		{
+			if (actions[choice]->run ())
+			{
+				choice = (choice + 1) % num_choices;
+			}
+		}
 		else if (buttons & BUTTON_LEFT)
-			return;
-		show ();
-		while (lcd.readButtons ()) {}
+		{
+			return false;
+		}
 	}
 }
 
