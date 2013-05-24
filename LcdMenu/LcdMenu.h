@@ -9,28 +9,29 @@ extern Adafruit_RGBLCDShield lcd;
 
 void message (char *line1, char *line2 = "");
 uint8_t waitForButton ();
+uint32_t readNum (uint8_t x, uint8_t y, uint8_t digits, uint8_t decimals = 0, uint32_t initial = 0);
 
 class action
 {
 	public:
-	virtual bool run () = 0;
+	virtual int8_t run () = 0;
 };
 
 class CB_t : public action
 {
-	bool (*cb)();
+	int8_t (*cb)();
 	public:
-	CB_t (bool (*cb)()) : cb (cb) {}
-	virtual bool run () { return cb (); }
+	CB_t (int8_t (*cb)()) : cb (cb) {}
+	virtual int8_t run () { return cb (); }
 };
 
-#define MenuItem(name) bool name ## _impl (); CB_t name (name ## _impl); bool name ## _impl ()
+#define MenuItem(name) int8_t name ## _impl (); CB_t name (name ## _impl); int8_t name ## _impl ()
 
 template <unsigned num_choices> class Menu : public action
 {
 	public:
 	Menu (char *title, char *(&names)[num_choices], action *(&actions)[num_choices]);
-	virtual bool run ();
+	virtual int8_t run ();
 
 	private:
 	char *title;
@@ -53,7 +54,7 @@ template <unsigned num_choices> void Menu <num_choices>::show ()
 	lcd.print (names[choice]);
 }
 
-template <unsigned num_choices> bool Menu <num_choices>::run ()
+template <unsigned num_choices> int8_t Menu <num_choices>::run ()
 {
 	while (true)
 	{
@@ -70,14 +71,12 @@ template <unsigned num_choices> bool Menu <num_choices>::run ()
 		}
 		else if (buttons & (BUTTON_SELECT | BUTTON_RIGHT))
 		{
-			if (actions[choice]->run ())
-			{
-				choice = (choice + 1) % num_choices;
-			}
+			// Use the return value of run as the menu choice adjustment.
+			choice = (choice + actions[choice]->run ()) % num_choices;
 		}
 		else if (buttons & BUTTON_LEFT)
 		{
-			return false;
+			return 0;
 		}
 	}
 }
