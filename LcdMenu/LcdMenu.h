@@ -7,7 +7,7 @@
 // You have to make sure this exists in your main program.
 extern Adafruit_RGBLCDShield lcd;
 
-void message (char *line1, char *line2 = "");
+void message (char const *line1, char const *line2 = "");
 uint8_t waitForButton ();
 uint32_t readNum (uint8_t x, uint8_t y, uint8_t digits, uint8_t decimals = 0, uint32_t initial = 0);
 
@@ -30,18 +30,18 @@ class CB_t : public action
 template <unsigned num_choices> class Menu : public action
 {
 	public:
-	Menu (char *title, char *(&names)[num_choices], action *(&actions)[num_choices]);
+	Menu (char const *title, char const *(names)[num_choices], action *(actions)[num_choices]);
 	virtual int8_t run ();
 
 	private:
-	char *title;
-	char **names;
+	char const *title;
+	char const **names;
 	action **actions;
 	uint8_t choice;
 	void show ();
 };
 
-template <unsigned num_choices> Menu <num_choices>::Menu (char *title, char *(&names)[num_choices], action *(&actions)[num_choices])
+template <unsigned num_choices> Menu <num_choices>::Menu (char const *title, char const *names[num_choices], action *actions[num_choices])
 	: title (title), names (names), actions (actions), choice (0)
 {
 }

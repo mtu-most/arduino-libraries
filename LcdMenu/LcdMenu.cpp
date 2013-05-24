@@ -1,7 +1,7 @@
 #include "LcdMenu.h"
 #include <string.h>
 
-void message (char *line1, char *line2)
+void message (char const *line1, char const *line2)
 {
 	lcd.clear ();
 	lcd.setCursor ((16 - strlen (line1)) / 2, 0);
