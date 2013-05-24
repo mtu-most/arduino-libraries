@@ -37,11 +37,14 @@ static void shownum (uint8_t x, uint8_t y, uint32_t num, uint8_t digits, uint8_t
 		power /= 10;
 		lcd.print (getDigit (num, power));
 	}
-	lcd.print (".");
-	for (uint8_t t = 0; t < decimals; ++t)
+	if (decimals > 0)
 	{
-		power /= 10;
-		lcd.print (getDigit (num, power));
+		lcd.print (".");
+		for (uint8_t t = 0; t < decimals; ++t)
+		{
+			power /= 10;
+			lcd.print (getDigit (num, power));
+		}
 	}
 	lcd.setCursor (x + pos + (pos >= digits), y);
 }
