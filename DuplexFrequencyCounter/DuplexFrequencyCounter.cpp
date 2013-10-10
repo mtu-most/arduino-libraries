@@ -19,7 +19,7 @@ void readFreq (uint32_t ms, uint32_t &result0, uint32_t &result1)	// {{{
 	// However, the number must be 1 lower, because we get 1 from overhead.
 	uint8_t counter_correction = ((0x3e - counter) & 0x3f) + 1;
 	uint8_t low_result0;
-	uint16_t overflow0 (0), overflow1 (0), low_result1 (0), tmpreg;
+	uint16_t overflow0 (0), overflow1 (0), low_result1 (0), tmpreg (0);
 	// The number of overflows we will be skipping by the code below.
 	uint16_t overflow_skips = (counter + counter_correction + 1) >> 6;
 	uint16_t fract_extra = overflow_skips * FRACT_INC;
@@ -140,7 +140,7 @@ void readFreq (uint32_t ms, uint32_t &result0, uint32_t &result1)	// {{{
 		[counter] "+w" (counter),
 		[overflow0] "+w" (overflow0),
 		[overflow1] "+w" (overflow1),
-		[cnt_backup] "+r" (tmpreg),
+		[cnt_backup] "+a" (tmpreg),
 		[cnt_correct] "+a" (counter_correction),
 		[result0] "=r" (low_result0),
 		[result1] "+r" (low_result1)
