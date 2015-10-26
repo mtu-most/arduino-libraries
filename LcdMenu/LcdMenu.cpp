@@ -10,14 +10,23 @@ void message (char const *line1, char const *line2)
 	lcd.print (line2);
 }
 
-uint8_t waitForButton ()
-{
-	while (lcd.readButtons () != 0) {}
-	while (true)
-	{
+uint8_t checkButton(bool block) {
+	static bool wait = true;
+	if (block) 
+		while (lcd.readButtons () != 0) {}
+	else if (wait) {
+		if (lcd.readButtons () != 0) 
+			return 0;
+	}
+	while (true) {
 		uint8_t buttons = lcd.readButtons ();
-		if (buttons != 0)
-			return buttons;
+		if (buttons != 0) {
+			wait = true;
+				return buttons;                                          
+		}
+		wait = false;
+		if (!block)
+			return 0;
 	}
 }
 
