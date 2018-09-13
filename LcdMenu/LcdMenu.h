@@ -2,7 +2,8 @@
 #define _LCD_MENU
 
 #include <Arduino.h>
-#include "LiquidCrystal_I2C.h"
+//#include "LiquidCrystal_I2C.h"
+#include "Adafruit_RGBLCDShield.h"
 
 //#define DBG_MENU(x, m) do { Serial.print(x); Serial.println(m); } while (0)
 #define DBG_MENU(x, m) do {} while (0)
@@ -13,18 +14,25 @@
 #define WAIT 128
 
 // You have to make sure this exists in your main program.
-extern LiquidCrystal_I2C lcd;
+//extern LiquidCrystal_I2C lcd;
+extern Adafruit_RGBLCDShield lcd;
 extern uint8_t checkButton(bool block);
+
+// Internal variables so message() will work properly.
+// Those are set by the Menu() constructor; if that is not used, they should be set manually.
+extern uint8_t _lcd_width, _lcd_height;
 
 void message(char const *line1, char const *line2 = "");
 uint32_t readNum(uint8_t x, uint8_t y, uint8_t digits, uint8_t decimals = 0, uint32_t initial = 0);
 
 #define BUTTON_NONE 0
-#define BUTTON_LEFT 1
-#define BUTTON_UP 2
-#define BUTTON_RIGHT 4
-#define BUTTON_DOWN 8
-#define BUTTON_SELECT 16
+#ifndef BUTTON_UP
+#define BUTTON_UP 0x08
+#define BUTTON_DOWN 0x04
+#define BUTTON_LEFT 0x10
+#define BUTTON_RIGHT 0x02
+#define BUTTON_SELECT 0x01
+#endif
 
 class action
 {
@@ -45,7 +53,7 @@ class CB_t : public action
 template <unsigned num_choices> class Menu : public action
 {
 	public:
-	Menu(char const *title, char const *(names)[num_choices], action *(actions)[num_choices]);
+	Menu(char const *title, char const *(names)[num_choices], action *(actions)[num_choices], uint8_t width = 16, uint8_t height = 2);
 	virtual int8_t run(bool block, char const *info = "");
 	virtual int8_t iteration(bool block, char const *info = "");
 
@@ -59,9 +67,11 @@ template <unsigned num_choices> class Menu : public action
 	void show(char const *info = "");
 };
 
-template <unsigned num_choices> Menu <num_choices>::Menu(char const *title, char const *names[num_choices], action *actions[num_choices])
+template <unsigned num_choices> Menu <num_choices>::Menu(char const *title, char const *names[num_choices], action *actions[num_choices], uint8_t width, uint8_t height)
 	: title(title), names(names), actions(actions), current(~0), choice(0), waiting(false)
 {
+	_lcd_width = width;
+	_lcd_height = height;
 }
 
 template <unsigned num_choices> void Menu <num_choices>::show(char const *info)
@@ -70,18 +80,28 @@ template <unsigned num_choices> void Menu <num_choices>::show(char const *info)
 	lcd.setCursor(0, 0);
 	lcd.print(title);
 	int8_t len = int8_t(strlen(info));
-	for (int8_t i = 0; i < 16 - int8_t(strlen(title)) - len; ++i)
+	for (int8_t i = 0; i < _lcd_width - int8_t(strlen(title)) - len; ++i)
 		lcd.print(" ");
 	if (len > 0) {
-		lcd.setCursor(16 - len, 0);
+		lcd.setCursor(_lcd_width - len, 0);
 		lcd.print(info);
 	}
-	lcd.setCursor(0,1);
+	for (int y = 1; y < _lcd_height / 2; ++y) {
+		lcd.setCursor(0, y);
+		for (int x = 0; x < _lcd_width; ++x)
+			lcd.print(" ");
+	}
+	lcd.setCursor(0, _lcd_height / 2);
 	lcd.print(choice);
 	lcd.print(":");
 	lcd.print(names[choice]);
-	for (int8_t i = 0; i < 16 - (choice >= 10 ? 3 : 2) - int8_t(strlen(names[choice])); ++i)
+	for (int8_t i = 0; i < _lcd_width - (choice >= 10 ? 3 : 2) - int8_t(strlen(names[choice])); ++i)
 		lcd.print(" ");
+	for (int y = _lcd_height / 2 + 1; y < _lcd_height; ++y) {
+		lcd.setCursor(0, y);
+		for (int x = 0; x < _lcd_width; ++x)
+			lcd.print(" ");
+	}
 #ifdef SERIAL_LCD
 	Serial.print("Menu choice: ");
 	Serial.println(names[choice]);
